@@ -1,17 +1,17 @@
-use axum::http::StatusCode;
-use axum::response::Html;
-use serde_json::{Value, json};
-use axum::{response::Json,};
+use axum::{http::StatusCode, response::Response};
+use axum::response::{Html, IntoResponse};
+use serde_json::{json};
+use axum::response::Json;
 
-pub async fn root() -> (StatusCode, Html<&'static str>) {
+pub async fn root() -> (StatusCode, Response) {
     let html_response = r#"
     <H1>Jungle:</H1>
     <a href="jungle">Here</a>
     "#;
 
-    (StatusCode::NOT_FOUND, Html(html_response))
+    (StatusCode::NOT_FOUND, Html(html_response).into_response())
 }
 
-pub async fn get_health_status() -> (StatusCode, Json<Value>) {
-    (StatusCode::OK, Json(json!({ "response": "ok" })))
+pub async fn get_health_status() -> (StatusCode, Response) {
+    (StatusCode::OK, Json(json!({ "response": "ok" })).into_response())
 }

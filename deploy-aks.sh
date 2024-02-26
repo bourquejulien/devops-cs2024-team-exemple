@@ -2,14 +2,15 @@
 set -e
 
 TEAM_NAME=$1
-ACR_NAME=$2
+RANDOM_ID=$2
 DOMAIN_NAME=$3
-
-REPO_NAME="${ACR_NAME}.azurecr.io"
 
 IMAGE_TAG="latest"
 PROJECT_NAME="rusters"
 CLUSTER_NAME="team"
+
+ACR_NAME="${CLUSTER_NAME}${TEAM_NAME}${RANDOM_ID}"
+REPO_NAME="${ACR_NAME}.azurecr.io"
 IMAGE_NAME="${REPO_NAME}/${PROJECT_NAME}:${IMAGE_TAG}"
 
 az acr login -n "$ACR_NAME"
@@ -29,3 +30,4 @@ else
    echo "Upgrading Helm Chart"
    eval helm upgrade -f helm/values.yaml $PROJECT_NAME helm/ $VARIABLES
 fi
+

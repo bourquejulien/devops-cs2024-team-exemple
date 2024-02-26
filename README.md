@@ -33,7 +33,7 @@ qui surveille toutes les requêtes. Pour s'échapper et retrouver la civilisatio
 - Une carte
 - Le code d'accès de la porte
 
-Vous avez la chance de disposer d'un accès complet à internet (sauf ChatGPT 🤷) et au cluster contrôlé par l'IA.
+Vous avez la chance de disposer d'un accès complet à internet (sauf ChatGPT 🤷) et de manière limitée au cluster contrôlé par l'IA.
 Vous pourrez ainsi aider vos concitoyens en leur fournissant les informations dont ils ont besoin!
 
 L'architecture simplifiée peut être résumée par la figure suivante :
@@ -73,16 +73,17 @@ Tout d'abord, tentez de vous connecter à Azure avec votre compte d'équipe à l
 - Rust : https://www.rust-lang.org/tools/install
 - Clippy, permet le formatage du code source : ``rustup component add clippy``
 
-> À noter : L'utilisation de rust n'est pas obligatoire, cependant certains problèmes nécessite une puissance de calcul élevée.
+> À noter : L'utilisation de rust n'est pas obligatoire, cependant l'épreuve 4.1 nécessite une puissance de calcul plus élevée.
 
 ## Épreuves
 Cette section détaille les différentes épreuves de la compétition.
 
-### 1.1 Serveur HTTP
+### 1. Code de départ (5 points)
+#### 1.1 Serveur HTTP (1.5 point)
 Cette première étape est la plus simple. Vous devez mettre en place un serveur http permanent d'obtenir le status de votre service (health check).
 L'adresse n'est pas très importante (ex. /health).
 
-### 1.2 Conteneur Docker
+#### 1.2 Conteneur Docker (3.5 points)
 Vous souhaitez conteneuriser votre implémentation afin de la déployer plus facilement. Une coquille de Dockerfile est fournie.
 
 N'oubliez pas de :
@@ -90,10 +91,10 @@ N'oubliez pas de :
 - Séparer votre Dockerfile en plusieurs sections (compilation, exécution, ...)
 - Utiliser des images de base sécuritaires et de petite taille
 
-### 2. Déploiement
+### 2. Déploiement (6 points)
 Cette section décris les étapes nécéssaires afin de déployer votre conteneur de la section précédente sur votre cluster.
 
-#### 2.1 Helm
+#### 2.1 Helm (2 points)
 Vous devez créer des charts helm permettant de déployer votre conteneur sur un cluster Kubernetes.
 
 Les charts doivent permettre de :
@@ -111,23 +112,25 @@ service.beta.kubernetes.io/azure-load-balancer-internal: TODO
 
 Un exemple de chart helm est fourni. Vous pouvez également recréer un template de charts avec la commande ``helm create NAME_OF_PROJECT``.
 
-#### 2.2 Azure
+#### 2.2 Azure (2 point)
 Lors de cette étape, vous devez créer une image de votre service, pousser cette image sur l'ACR et déployer votre service à l'aide des charts de l'étape précédente.
 
 Ici, l'objectif n'est pas de déployer à partir de Gitlab, mais bien à partir de votre ordinateur afin de valider que ce que vous avez fait jusqu'à présent est bien fonctionnel.
 
 TODO : Décider si le script est fourni...
 
+TODO : Tout doit être scripté
+
 Les variables nécéssaires au déploiement sont les suivantes :
 - Votre nom d'utilisateur Azure
-- Votre mot de passe Azure.
-- Le TenantId (vous devez le retrouver à partir du portail en ligne au de AZ shell).
-- Le nom de l'ACR.
-- Le nom du Ressource Group.
-- Le nom du cluster.
-- Le nom du domaine : team{# d'équipe}.dev.cs2024.one.
+- Votre mot de passe Azure
+- Le TenantId (vous devez le retrouver à partir du portail en ligne au de AZ shell)
+- Le nom de l'ACR
+- Le nom du Ressource Group
+- Le nom du cluster
+- Le nom du domaine : team{# d'équipe}.dev.cs2024.one
 
-#### 2.3 Pipeline Gitlab
+#### 2.3 Pipeline Gitlab (2 points)
 À partir des étapes de la section 2.2 vous devez automatiser le déploiement par l'entremise d'un pipeline Gitlab.
 
 Le pipeline doit permettre de :
@@ -155,28 +158,120 @@ JOB_NAME:
 
 > L'image ``brqu/docker-az:latest`` est basée sur ``docker:24.0.5`` et contient en plus helm et AZ shell. En l'utilisant, vous n'aurez pas besoin d'installer ces outils à chaque déploiement et accélèrerez ainsi votre pipeline.
 
-### 3. Accéder à la jungle
+### 3. Accéder à la jungle (2 points)
 Dans cette étape, vous devez accéder à la page de status sur service des prisonniers de la jungle. Pour ce faire, vous devez faire une requête http GET à l'adresse suivante à partir de votre service :
 - http://ai.private.dev.cs2024.one/jungle
 
 Vous devez pouvoir accéder à l'information retournée par cette requête en effectuant une requête à votre propre service.
 
-### 4. Libérer les prisonniers
-L'objectif de cette section est de fournir les informations nécéssaires au service des prisonniers afin qu'ils puissent se libérer.
+### 4. Libérer les prisonniers (6 points)
+L'objectif de cette section est de fournir les informations nécessaires au service des prisonniers afin qu'ils puissent se libérer.
 
-#### 4.1 Fournir un accès
-TODO Readme
+#### 4.1 Fournir un accès (1 point)
+Afin d'accomplir les étapes qui suivent, il est nécessaire que les prisonniers de la jungle soient en mesure de communiquer avec votre équipe.
+Pour ce faire, ils effectueront des requêtes à travers l'IA qui seront redirigés vers votre cluster.
 
-#### 4.2 Météo
-TODO Readme
+Les requêtes seront des ``POST`` vers le chemin suivant : ``/router``.
 
-#### 4.3 Carte
-TODO implémentation
+Chaque requête contient un paramètre (_query parameter_) : ``request``. Ce paramètre permet d'indiquer le type de requête en provenance de la jungle.
+Le corps (_body_) de la requête contient de l'information sérialisée au format _JSON_ spécifique à chaque requête.
 
-#### 4.4 Code
-TODO implémentation
+Afin de valider que vous êtes bien en mesure de recevoir les requêtes de la jungle, il suffit d'écouter à l'address ``/router`` des requêtes ayant comme paramètre ``?request=status``.
+Pour indiquer que le message est bien reçu, il suffit de répondre à la requête avec un code d'erreur dans les 200.
 
-### 5. Bonus
+#### 4.2 Météo (1.5 point)
+Afin de s'échapper de leur bunker, les prisoners doivent avoir accès aux conditions météos. En effet, les plantes aiment beaucoup la chaleur, ils vont donc s'échapper lorsqu'il fait plus froid.
+
+Afin d'obtenir d'obtenir les informations météo, les prisonniers vont réaliser une requête vers le chemin ``/router?request=weather``.
+
+Le corps de la requête contiendra les coordonnées du lieu dont ils souhaitent obtenir la météo. Le _payload_ est au format _JSON_ suivant :
+```typescript
+interface Coords {
+    x: number; // lattitude
+    y: number; // longitude
+}
+```
+
+Vous devez retourner les informations météo (en réponse à la requête) au format JSON suivant :
+```typescript
+export interface Weather {
+    temperature: number; // Celcius
+    windSpeed: number; // Km/h
+    precipitation: number; // mm
+    description: string; // Description of the current conditions
+}
+```
+
+> Afin d'obtenir les informations météo, il est suggéré d'utiliser l'API suivante : https://api.open-meteo.com.
+> Si vous utilisez une autre API, les résults seront considérés valides si les précipitations et la température sont similaires (5mm, 5°c).
+
+#### 4.3 Carte (2 points)
+Afin de sortir de leur bunker, les prisonniers doivent avoir accès à la carte de la jungle. Cette carte prend la forme d'un conteneur docker.
+
+Image de la carte : ``brqu/jungle-map``.
+
+Ce conteneur doit être déployé sur le même cluster que votre conteneur.
+
+> À noter : Il est fortement conseiller d'effectuer le déploiement avec helm (voir ``helm init``).
+
+Les requêtes en provenance de la jungle (vers ``/router``) auront comme paramètre ``request=map``.
+Le payload du _body_ sera au format suivant :
+```typescript
+interface MapRequest {
+    x: number, // lattitude, float
+    y: number, // longitude, float
+    size: number, // map size, positive integer
+}
+```
+
+Afin d'obtenir une carte à partir de ce conteneur, il est possible d'effectuer une requête ``POST`` à ``/``.
+Les paramètres sont des _query parameters_ portant les même noms que les attributs de l'interface ``MapRequest``. Par exemple :
+
+```
+http://[MAP_CONTAINER_URL]/?x=75.653&y=-45.6534&size=3
+```
+
+Le conteneur fournit alors une réponse en ``JSON`` suivant le format suivant :
+
+```typescript
+SIZE = ...
+interface MapResponse {
+    map: number[SIZE][SIZE]; // Matrix of intergers
+}
+```
+
+Cette information peut être directement retournée à la requête (sur ``/router``) car le format de réponse est le même!
+
+Si cette étape est concluante, la page de status (http://ai.private.dev.cs2024.one/jungle) devrait être mise à jour après environ une minute.
+
+#### 4.4 Fournir aux prisoners mot de passe de la porte (1.5 point)
+Maintenant que les prisoners ont accès à la météo et à la carte, il ne reste plus qu'à leur donner le mot de passe de la porte qui les séparent du monde extérieur.
+
+Heureusement pour eux, les mots de passes choisis par l'IA sont inspirés de mots de passe réels qui sont présents dans une [liste](https://raw.githubusercontent.com/DavidWittman/wpxmlrpcbrute/master/wordlists/1000-most-common-passwords.txt) bien connue.
+
+Lors qu'il tente d'ouvrir la porte, un mot de passe à usage unique est "généré" à partir de cette liste et les prisonniers ont trouvé le moyen d'intercepter le hash md5 de ce mot de passe!
+Cependant, ils ne disposent pas d'une puissance de calcul suffisante afin de retrouver le bon mot de passe en moins de 500ms. Ils ont donc encore besoin de votre aide.
+
+Les mots de passe haché seront transmis encodé au format base64 à ``/router?request=door`` dans un _payload_ au format suivant :
+
+```typescript
+interface Door {
+    hash: string; // base64 encoded md5 hash
+}
+```
+
+La jungle n'attend pas de réponse de cette requête, il suffit de répondre avec un code dans les 200.
+
+Vous devez trouver le mod de passe correspond au hash en moins de 500ms et l'envoyer à la jungle.
+
+Afin d'envoyer le mot de passe à la jungle, vous devez effectuer une requête ``POST`` à l'adresse suivante :
+```
+http://ai.private.dev.cs2024.one/jungle/unlock?password=UNHASHED_PASSWORD
+```
+
+Si le mot de passe est correctement retourné, la page de stage de la jungle devrait se mettre à jour en environ une minute.
+
+### 5. Bonus (0.5 points)
 
 Où se trouve le bunker ?
 
@@ -189,10 +284,10 @@ Les critères d'évaluation sont les suivants :
 | Critères                | Score /20 |
 |-------------------------|-----------|
 | Code de base et Docker  | /5        |
-| Déploiement             | /5        |
+| Déploiement             | /6        |
 | Accéder à la jungle     | /2        |
 | Libérer les prisonniers | /6        |
-| Qualité de la solution  | /2        |
+| Qualité de la solution  | /1        |
 
 Les quatre premiers critères sont détaillées dans la section [Épreuves](#épreuves).
 Le dernier critère est beaucoup plus subjectif et sera évalué en fonction de la cohérence générale de la solution.
