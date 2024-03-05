@@ -252,7 +252,7 @@ Cette information peut être directement retournée à la requête (sur ``/route
 
 Si cette étape est concluante, la page de status (http://ai.private.dev.cs2024.one/jungle) devrait être mise à jour après environ une minute.
 
-#### 4.4 Fournir aux prisoners mot de passe de la porte (1.5 point)
+#### 4.4 Fournir aux prisoners le mot de passe de la porte (1.5 point)
 Maintenant que les prisoners ont accès à la météo et à la carte, il ne reste plus qu'à leur donner le mot de passe de la porte qui les séparent du monde extérieur.
 
 Heureusement pour eux, les mots de passes choisis par l'IA sont inspirés de mots de passe réels qui sont présents dans une [liste](https://raw.githubusercontent.com/DavidWittman/wpxmlrpcbrute/master/wordlists/1000-most-common-passwords.txt) bien connue.
