@@ -63,7 +63,6 @@ Sous Windows, il est possible d'utiliser WSL.
 
 Tout d'abord, tentez de vous connecter à Azure avec votre compte d'équipe à l'adresse suivante : https://portal.azure.com.
 
-
 ### Installation des dépendances :
 - Docker, engin (de préférence) ou desktop : https://docs.docker.com/engine/install/
 - AZ shell, facilite l'accès au cluster : https://learn.microsoft.com/en-us/cli/azure/install-azure-cli
@@ -92,13 +91,13 @@ N'oubliez pas de :
 - Utiliser des images de base sécuritaires et de petite taille
 
 ### 2. Déploiement (6 points)
-Cette section décris les étapes nécéssaires afin de déployer votre conteneur de la section précédente sur votre cluster.
+Cette section décris les étapes nécessaires afin de déployer votre conteneur de la section précédente sur votre cluster.
 
 #### 2.1 Helm (2 points)
 Vous devez créer des charts helm permettant de déployer votre conteneur sur un cluster Kubernetes.
 
 Les charts doivent permettre de :
-- Déployer votre service à partir du ACR (Azure Container Registry) mis à votre disposition.
+- Déployer votre service à partir du ACR (Azure Container Registry) mis à votre disposition (l'image sera y sera poussée en 2.2).
 - Ajouter un service kubernetes permettant d'accéder à votre pod.
 - Ajouter un Ingress permettant d'accéder à votre service depuis l'extérieur et ainsi intéragir avec ce dernier.
 - Ajouter un Service permettant à l'autre cluster (celui de l'IA) d'accéder au vôtre.
@@ -117,10 +116,6 @@ Lors de cette étape, vous devez créer une image de votre service, pousser cett
 
 Ici, l'objectif n'est pas de déployer à partir de Gitlab, mais bien à partir de votre ordinateur afin de valider que ce que vous avez fait jusqu'à présent est bien fonctionnel.
 
-TODO : Décider si le script est fourni...
-
-TODO : Tout doit être scripté
-
 Les variables nécéssaires au déploiement sont les suivantes :
 - Votre nom d'utilisateur Azure
 - Votre mot de passe Azure
@@ -129,6 +124,10 @@ Les variables nécéssaires au déploiement sont les suivantes :
 - Le nom du Ressource Group
 - Le nom du cluster
 - Le nom du domaine : team{# d'équipe}.dev.cs2024.one
+
+L'ensemble de ces étapes doivent être scripté afin d'être facilement reproductibles. Vous devez vous référer à la documentation de Helm et Azure cli.
+
+> À noter : Un exemple de script (``deploy-aks.sh``) vous est fournis. Vous pouvez partir de là pour cette étape.
 
 #### 2.3 Pipeline Gitlab (2 points)
 À partir des étapes de la section 2.2 vous devez automatiser le déploiement par l'entremise d'un pipeline Gitlab.
@@ -141,7 +140,7 @@ Le pipeline doit permettre de :
 Les deux premières étapes vous sont laissées. Pour la dernière, voici quelques suggestions :
 - Générer l'image docker à partir du pipeline.
 - Réutiliser le script de l'étape précédente afin de pousser l'image sur l'ACR et déployer les charts helm.
-- Placer les informations nécéssaires au déploiement en variable d'environnement dans les configurations de votre dépôt Gitlab.
+- Placer les informations nécessaires au déploiement en variable d'environnement dans les configurations de votre dépôt Gitlab.
 - Utiliser sur docker-in-docker (dind). Les pipelines Gitlab étant conteneurisé par défaut, dind est très utile afin de permettre l'utilisation de Docker à partir du pipeline.
 
 Exemple pour docker-in-docker :
@@ -158,9 +157,19 @@ JOB_NAME:
 
 > L'image ``brqu/docker-az:latest`` est basée sur ``docker:24.0.5`` et contient en plus helm et AZ shell. En l'utilisant, vous n'aurez pas besoin d'installer ces outils à chaque déploiement et accélèrerez ainsi votre pipeline.
 
+> Pour vous connecter à Azure à partir du pipeline vous devrez utiliser ``az login`` avec votre nom d'utilisateur et votre mot de passe.
+
 ### 3. Accéder à la jungle (2 points)
 Dans cette étape, vous devez accéder à la page de status sur service des prisonniers de la jungle. Pour ce faire, vous devez faire une requête http GET à l'adresse suivante à partir de votre service :
 - http://ai.private.dev.cs2024.one/jungle
+
+L'information est retournée dans le corps (_body_) de la réponse en JSON. Il s'agit d'une liste de ``Step``. Un ``Step`` est définie selon le format suivant :
+```typescript
+interface Step {
+    name: string;
+    status: string;
+}
+```
 
 Vous devez pouvoir accéder à l'information retournée par cette requête en effectuant une requête à votre propre service.
 
@@ -187,7 +196,7 @@ Afin d'obtenir d'obtenir les informations météo, les prisonniers vont réalise
 Le corps de la requête contiendra les coordonnées du lieu dont ils souhaitent obtenir la météo. Le _payload_ est au format _JSON_ suivant :
 ```typescript
 interface Coords {
-    x: number; // lattitude
+    x: number; // latitude
     y: number; // longitude
 }
 ```
@@ -198,7 +207,6 @@ export interface Weather {
     temperature: number; // Celcius
     windSpeed: number; // Km/h
     precipitation: number; // mm
-    description: string; // Description of the current conditions
 }
 ```
 
@@ -218,14 +226,14 @@ Les requêtes en provenance de la jungle (vers ``/router``) auront comme paramè
 Le payload du _body_ sera au format suivant :
 ```typescript
 interface MapRequest {
-    x: number, // lattitude, float
+    x: number, // latitude, float
     y: number, // longitude, float
     size: number, // map size, positive integer
 }
 ```
 
 Afin d'obtenir une carte à partir de ce conteneur, il est possible d'effectuer une requête ``POST`` à ``/``.
-Les paramètres sont des _query parameters_ portant les même noms que les attributs de l'interface ``MapRequest``. Par exemple :
+Les paramètres sont des _query parameters_ portant les mêmes noms que les attributs de l'interface ``MapRequest``. Par exemple :
 
 ```
 http://[MAP_CONTAINER_URL]/?x=75.653&y=-45.6534&size=3
@@ -262,7 +270,7 @@ interface Door {
 
 La jungle n'attend pas de réponse de cette requête, il suffit de répondre avec un code dans les 200.
 
-Vous devez trouver le mod de passe correspond au hash en moins de 500ms et l'envoyer à la jungle.
+Vous devez trouver le mot de passe correspond au hash en moins de 500ms et l'envoyer à la jungle.
 
 Afin d'envoyer le mot de passe à la jungle, vous devez effectuer une requête ``POST`` à l'adresse suivante :
 ```
@@ -290,17 +298,23 @@ Les critères d'évaluation sont les suivants :
 | Qualité de la solution  | /1        |
 
 Les quatre premiers critères sont détaillées dans la section [Épreuves](#épreuves).
-Le dernier critère est beaucoup plus subjectif et sera évalué en fonction de la cohérence générale de la solution.
-Il ne s'agit pas proprement dit d'évaluer la qualité du code, mais plutôt du fonctionnement général. Des points seront retranché
-en cas de non-respect (évident) de bonne pratique ou encore l'utilisation de hack pouvant être évités.
+
+Le dernier critère sera évalué en fonction de la cohérence générale de la solution et sera évalué selon les
+critères suivants (perte de 1 point au maximum) :
+- Aucun linter n'est utilisé : -0.5.
+- Aucune convention propre au langage utilisée n'est respectée : -0.5.
+- Code dupliqué (ex. ne pas utiliser le script de déploiement dans le pipeline) : -0.5.
+- Présence de secrets dans le code (ex. mot de passe) : -0.5.
+- Valeurs propres à environment présentes directement dans le code (tentez d'utiliser des variables d'environnement) : -0.25.
 
 > À noter : L'évaluation est partiellement automatisée, néanmoins l'ensemble de votre travail sera révisé manuellement.
-> En cas de doute, n'hésitez pas à indiquer vos suppositions en commentaire.
+> En cas de doute, n'hésitez pas à indiquer vos suppositions dans la section [Commentaires](#Commentaires) à la fin de ce fichier.
 
 ### Remise
 - La remise se fait par Git, vous devez soumettre par l'entremise de ce dépôt tout votre travail
 - Le dernier commit poussé sur la branche `main` sera corrigé
 - Tout commit poussé après l'heure de remise sera ignoré
 
-## Erreurs fréquentes
-TODO ?
+## Commentaires
+
+...

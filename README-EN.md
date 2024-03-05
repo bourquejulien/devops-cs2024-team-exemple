@@ -5,7 +5,7 @@ Welcome to the DevOps competition. This competition aims to put your knowledge o
 
 Before starting, it is essential to have access to the following resources:
 - Your team number.
-- Your team username, in the format: `team{team number}@cs2024.one`
+- Your team username, in the format: ``team{team number}@cs2024.one``
 - Your team password.
 
 **This information will be provided to you upon your arrival.**
@@ -16,7 +16,10 @@ Before starting, it is essential to have access to the following resources:
 - The use of generative AI is prohibited (ChatGPT, Copilot, ...): the use of these tools will be considered as external communication.
 - Do not attempt to harm the competition infrastructure.
 
-> Note: Online help forums (Stack Overflow, Reddit, ...) are not considered external help. Their use is therefore allowed. However, you cannot ask questions on these forums. In case of non-compliance with these rules, penalties will be applied: point deduction, disqualification.
+> Note: Online help forums (Stack Overflow, Reddit, ...) are not considered external help. Their use is therefore allowed.
+> However, you cannot ask questions on these forums. In case of non-compliance with these rules, penalties will be applied: point deduction, disqualification.
+
+In case of non-compliance with these rules, penalties will be applied: **loss of points, disqualification**.
 
 ## Introduction and Objective
 Some of your fellow citizens are trapped inside a bunker in an isolated location surrounded by trees! Your objective is to help them escape.
@@ -87,7 +90,7 @@ This section describes the steps necessary to deploy your container from the pre
 You must create Helm charts to deploy your container to a Kubernetes cluster.
 
 The charts should allow you to:
-- Deploy your service from the ACR (Azure Container Registry) provided to you.
+- Deploy your service from the ACR (Azure Container Registry) provided to you (the image will be push during the next step).
 - Add a Kubernetes service to access your pod.
 - Add an Ingress to access your service from outside and thus interact with it.
 - Add a Service to allow the other cluster (the one with the AI) to access yours.
@@ -114,6 +117,10 @@ The variables required for deployment are as follows:
 - The name of the Resource Group
 - The name of the cluster
 - The domain name: team{team number}.dev.cs2024.one
+
+All these steps must be scripted so than can be easily reproducible. You need to refer to the Helm and Azure cli documentation to complete this step.
+
+> An exemple (``deploy-aks.sh``) is provided. You can start from there.
 
 #### 2.3 Gitlab Pipeline (2 points)
 Based on the steps from section 2.2, you must automate deployment through a Gitlab pipeline.
@@ -143,9 +150,19 @@ JOB_NAME:
 
 > The image ``brqu/docker-az:latest`` is based on ``docker:24.0.5`` and also contains helm et AZ shell. By using Gitlab pipelines, you won't need to install these tools for each deployment, which will speed up your pipeline.
 
+> To login into the azure client from the pipeline, you will need to use the ``az login`` command with your username and password.
+
 ### 3. Access the Jungle (2 points)
 In this step, you must access the status page on the jungle prisoners' service. To do this, you must make an HTTP GET request to the following address from your service:
 - http://ai.private.dev.cs2024.one/jungle
+
+The data is returned in the body of the response in JSON. The data is composed of a list of ``Step`` where a ``Step`` is defined by the following interface:
+```typescript
+interface Step {
+    name: string;
+    status: string;
+}
+```
 
 You must be able to access the information returned by this request by making a request to your own service.
 
@@ -171,7 +188,7 @@ To obtain weather information, the prisoners will make a request to the path ``/
 The request body will contain the coordinates of the location for which they want to obtain the weather. The payload is in the following JSON format:
 ```typescript
 interface Coords {
-    x: number; // lattitude
+    x: number; // latitude
     y: number; // longitude
 }
 ```
@@ -182,7 +199,6 @@ export interface Weather {
     temperature: number; // Celcius
     windSpeed: number; // Km/h
     precipitation: number; // mm
-    description: string; // Description of the current conditions
 }
 ```
 
@@ -202,7 +218,7 @@ Requests from the jungle (to ``/router``) will have the parameter ``request=map`
 The payload of the body will be in the following format:
 ```typescript
 interface MapRequest {
-    x: number, // lattitude, float
+    x: number, // latitude, float
     y: number, // longitude, float
     size: number, // map size, positive integer
 }
@@ -274,17 +290,22 @@ The grading criteria are as follows:
 | Solution quality   | /1        |
 
 The first four criteria are detailed in the [Challenges](#challenges) section.
-The last criterion is much more subjective and will be evaluated based on the overall coherence of the solution.
-It is not strictly about evaluating the quality of the code, but rather the general functionality. Points will be deducted
-for obvious non-compliance with good practices or the use of hacks that could be avoided.
+
+The final criterion will be evaluated based on the overall coherence of the solution and will be assessed according to the following criteria (loss of up to 1 point):
+- No linter is used: -0.5.
+- No language-specific conventions are respected: -0.5.
+- Duplicated code (e.g., not using the deployment script in the pipeline): -0.5.
+- Presence of secrets in the code (e.g., password): -0.5.
+- Environment-specific values present directly in the code (try to use environment variables): -0.25.
 
 > Note: The evaluation is partially automated, however, all of your work will be reviewed manually.
-> In case of doubt, do not hesitate to indicate your assumptions in comments.
+> If in doubt, indicate your assumptions in the [Comments](#comments) section à the end of this file.
 
 ### Submission
 - The submission is done through Git, you must submit all your work through this repository
 - The last commit pushed to the `main` branch will be graded
 - Any commit pushed after the submission deadline will be ignored
 
-## Common Mistakes
-TODO?
+## Comments
+
+...

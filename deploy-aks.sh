@@ -2,26 +2,22 @@
 set -e
 
 TEAM_NAME=$1
-RANDOM_ID=$2
+ACR_NAME=$2
 DOMAIN_NAME=$3
 
 IMAGE_TAG="latest"
 PROJECT_NAME="rusters"
 CLUSTER_NAME="team"
 
-ACR_NAME="${CLUSTER_NAME}${TEAM_NAME}${RANDOM_ID}"
 REPO_NAME="${ACR_NAME}.azurecr.io"
 IMAGE_NAME="${REPO_NAME}/${PROJECT_NAME}:${IMAGE_TAG}"
 
-az acr login -n "$ACR_NAME"
-docker build --target final -t "$IMAGE_NAME" .
-docker push "$IMAGE_NAME"
-az aks get-credentials --overwrite-existing --resource-group "CS-${TEAM_NAME}-rg" --name "${CLUSTER_NAME}cluster"
+# TODO Log into the ACR
+# TODO Build the image
+# TODO Push the image to the ACR
+# TODO Retrieve kubernetes credentials / add them to .kubeconfig
 
-VARIABLES+=("--set=image.repository=\"${REPO_NAME}/${PROJECT_NAME}\"")
-VARIABLES+=("--set=image.tag=\"${IMAGE_TAG}\"")
-VARIABLES+=("--set=ingress.hosts[0].host=\"team${TEAM_NAME}.${DOMAIN_NAME}\"")
-VARIABLES="$(IFS=" " ; echo "${VARIABLES[*]}")"
+VARIABLES=... # TOTO set variables for helm deployment
 
 if ! (helm ls  | grep $PROJECT_NAME) then
    echo "Installing Helm Chart"
@@ -30,4 +26,3 @@ else
    echo "Upgrading Helm Chart"
    eval helm upgrade -f helm/values.yaml $PROJECT_NAME helm/ $VARIABLES
 fi
-
