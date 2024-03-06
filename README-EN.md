@@ -8,7 +8,7 @@ Before starting, it is essential to have access to the following resources:
 - Your team username, in the format: ``team{team number}@cs2024.one``
 - Your team password.
 
-**This information will be provided to you upon your arrival.**
+**This information will be provided to you at the start of the competition.**
 
 ### General rules
 
@@ -56,16 +56,20 @@ Recommended editors: VSCode, RustRover.
 
 First, try to connect to Azure with your team account at the following address: [https://portal.azure.com](https://portal.azure.com).
 
-### Dependency Installation:
+### Dependency Installation
 - Docker, engine (preferably) or desktop: [https://docs.docker.com/engine/install/](https://docs.docker.com/engine/install/)
-- AZ shell, facilitates access to the cluster: [https://learn.microsoft.com/en-us/cli/azure/install-azure-cli](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
+- AZ cli, facilitates access to the cluster: [https://learn.microsoft.com/en-us/cli/azure/install-azure-cli](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
 - Helm, allows testing charts locally before deploying them: [https://helm.sh/docs/intro/install/](https://helm.sh/docs/intro/install/)
-
-### Recommended Dependencies:
 - Rust: [https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install)
 - Clippy, enables source code formatting: `rustup component add clippy`
 
-> Note: The use of Rust is not mandatory, however, the ``Door`` challenge (4.1) requires higher computing power.
+### First connection to Azure
+First, try to connect to Azure with your team account at the following address: [https://portal.azure.com](https://portal.azure.com).
+
+Three resources will be useful to you:
+- Azure Kubernetes Cluster (AKS): the cluster you will work on is named ``teamcluster``.
+- Azure Container Registry (ACR): the registry that will contain the images of your service is named ``team{TEAM_NUMBER}{RANDOM_ID}``.
+- Microsoft Azure AD (formerly Active Directory): allows you to retrieve the Tenant Id.
 
 ## Challenges
 This section details the different challenges of the competition.
@@ -76,7 +80,7 @@ This first step is the simplest. You must set up a permanent HTTP server to obta
 The address is not very important (e.g., /health).
 
 #### 1.2 Docker Container (3.5 points)
-You want to containerize your implementation for easier deployment. A Dockerfile shell is provided.
+You want to containerize your implementation for easier deployment. An exemple Dockerfile is provided.
 
 Don't forget to:
 - Allow opening the necessary ports for your server to work
@@ -112,7 +116,6 @@ Here, the goal is not to deploy from Gitlab, but rather from your computer to va
 The variables required for deployment are as follows:
 - Your Azure username
 - Your Azure password
-- The TenantId (you can find it from the online portal or AZ shell)
 - The name of the ACR
 - The name of the Resource Group
 - The name of the cluster
@@ -127,7 +130,7 @@ Based on the steps from section 2.2, you must automate deployment through a Gitl
 
 The pipeline should allow you to:
 - Compile the code.
-- Check the code structure (lint). This can be done with Clippy if Rust is used.
+- Check the code structure (lint). This can be done with Clippy.
 - Deploy to the AKS (Azure Kubernetes Service) cluster.
 
 The first two steps are left to you. For the last one, here are some suggestions:
@@ -148,7 +151,7 @@ JOB_NAME:
 ...
 ```
 
-> The image ``brqu/docker-az:latest`` is based on ``docker:24.0.5`` and also contains helm et AZ shell. By using Gitlab pipelines, you won't need to install these tools for each deployment, which will speed up your pipeline.
+> The image ``brqu/docker-az:latest`` is based on ``docker:24.0.5`` and also contains helm et AZ cli. By using Gitlab pipelines, you won't need to install these tools for each deployment, which will speed up your pipeline.
 
 > To login into the azure client from the pipeline, you will need to use the ``az login`` command with your username and password.
 
@@ -249,7 +252,7 @@ Now that the prisoners have access to the weather and the map, all that remains 
 
 Fortunately for them, the passwords chosen by the AI are inspired by real passwords that are present in a well-known [list](https://raw.githubusercontent.com/DavidWittman/wpxmlrpcbrute/master/wordlists/1000-most-common-passwords.txt).
 
-When they try to open the door, a one-time use password is "generated" from this list and the prisoners have found a way to intercept the md5 hash of this password!
+When they try to open the door, a one-time use password is "generated" from this list. The prisoners have found a way to intercept the md5 hash of this password!
 However, they do not have sufficient computing power to find the correct password in less than 500ms. So they still need your help.
 
 The hashed passwords will be transmitted encoded in base64 format to `/router?request=door` in a payload in the following format:
