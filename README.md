@@ -78,18 +78,22 @@ Trois ressources vous seront utiles :
 ## Épreuves
 Cette section détaille les différentes épreuves de la compétition.
 
+À l'exception des scripts de déploiement, tout le code doit être écrit en **Rust**. Les appels à du code écrit en ``c`` / ``c++`` sont interdit.
+
 ### 1. Code de départ (5 points)
 #### 1.1 Serveur HTTP (1.5 point)
 Cette première étape est la plus simple. Vous devez mettre en place un serveur http permettant d'obtenir le statut de votre service (health check).
 L'adresse n'est pas très importante (ex. /health).
 
 #### 1.2 Conteneur Docker (3.5 points)
-Vous souhaitez conteneuriser votre implémentation afin de la déployer plus facilement. Une coquille de Dockerfile est fournie.
+Vous souhaitez conteneuriser votre implémentation afin de la déployer plus facilement.
 
 N'oubliez pas de :
 - Permettre l'ouverture des ports nécessaire pour que votre serveur fonctionne
 - Séparer votre Dockerfile en plusieurs sections (compilation, exécution, ...)
-- Utiliser des images de base sécuritaires et de petite taille
+- Utiliser le caching afin de réduire le temps de compilation
+- Utiliser des images de base sécuritaires et de petite taille (alpine, distroless)
+- Lancer le programme à partir d'un utilisateur disposant de peu de privilèges
 
 ### 2. Déploiement (6 points)
 Cette section décrit les étapes nécessaires afin de déployer votre conteneur de la section précédente sur votre cluster.
@@ -98,10 +102,10 @@ Cette section décrit les étapes nécessaires afin de déployer votre conteneur
 Vous devez créer des charts helm permettant de déployer votre conteneur sur un cluster Kubernetes.
 
 Les charts doivent permettre de :
-- Déployer votre service à partir du ACR (Azure Container Registry) mis à votre disposition (l'image sera y sera poussée en 2.2).
-- Ajouter un service kubernetes permettant d'accéder à votre pod.
-- Ajouter un Ingress permettant d'accéder à votre service depuis l'extérieur et ainsi interagir avec ce dernier.
-- Ajouter un service permettant à l'autre cluster (celui de l'IA) d'accéder au vôtre.
+- Déployer votre service à partir du ACR (Azure Container Registry) mis à votre disposition (l'image sera y sera poussée en 2.2)
+- Ajouter un service kubernetes permettant d'accéder à votre pod
+- Ajouter un Ingress permettant d'accéder à votre service depuis l'extérieur et ainsi interagir avec ce dernier
+- Ajouter un service permettant à l'autre cluster (celui de l'IA) d'accéder au vôtre
 
 L'autre cluster tentera d'accéder au vôtre à adresse : 10.30.10.10.
 Le service permettant l'accès à votre pod à partir de l'autre cluster est similaire à celui fourni. Il est toutefois conseillé de jeter un coup d'œil aux annotations suivantes :
@@ -123,7 +127,7 @@ Les variables nécessaires au déploiement sont les suivantes :
 - Le nom de l'ACR
 - Le nom du Ressource Group
 - Le nom du cluster
-- Le nom du domaine : team{# d'équipe}.dev.cs2024.one
+- Le nom du domaine, selon vos charts Helm : team{# d'équipe}.dev.cs2024.one
 
 L'ensemble de ces étapes doivent être scriptées afin d'être facilement reproductibles. Vous devez vous référer à la documentation de Helm et Azure cli.
 
@@ -133,15 +137,20 @@ L'ensemble de ces étapes doivent être scriptées afin d'être facilement repro
 À partir des étapes de la section 2.2 vous devez automatiser le déploiement par l'entremise d'un pipeline Gitlab.
 
 Le pipeline doit permettre de :
-- Compiler le code.
-- Vérifier la structure du code (lint). Peut être réalisé avec Clippy.
-- Déployer sur le cluster AKS (Azure Kubernetes Cluster).
+- Compiler le code
+- Vérifier la structure du code (lint). Peut être réalisé avec Clippy
+- Déployer sur le cluster AKS (Azure Kubernetes Cluster)
 
-Les deux premières étapes vous sont laissées. Pour la dernière, voici quelques suggestions :
-- Générer l'image docker à partir du pipeline.
-- Réutiliser le script de l'étape précédente afin de pousser l'image sur l'ACR et de déployer les charts helm.
-- Placer les informations nécessaires au déploiement en variable d'environnement dans les configurations de votre dépôt Gitlab.
-- Utiliser sur docker-in-docker (dind). Les pipelines Gitlab étant conteneurisés par défaut, dind est très utile afin de permettre l'utilisation de Docker à partir du pipeline.
+Les deux premières étapes (build, lint) doivent respecter les requis suivants :
+- Doivent être réalisées lors d'un merge request ou lorsque'un commit est poussé sur la branche ``main``
+- Utiliser une cache afin d'éviter une recompilation complète lors de chaque exécution
+
+Les requis suivants doivent être respecté pour la dernière étape :
+- Doit uniquement être lancé lorsqu'un commit est poussé sur la branche ``main`` ou qu'un tag ``DEPLOY`` est poussé.
+- Générer l'image docker à partir du pipeline
+- Réutiliser le script de l'étape précédente afin de pousser l'image sur l'ACR et de déployer les charts helm
+- Placer les informations nécessaires au déploiement en variable d'environnement dans les configurations de votre dépôt Gitlab
+- Utiliser docker-in-docker (dind). Les pipelines Gitlab étant conteneurisés par défaut, dind est très utile afin de permettre l'utilisation de Docker à partir du pipeline
 
 Exemple pour docker-in-docker :
 ```yml
@@ -150,14 +159,10 @@ JOB_NAME:
   image: brqu/docker-az:latest # Or docker:24.0.5
   services:
     - docker:24.0.5-dind
-  before_script:
-    - docker info
-...
+#  ...
 ```
 
 > L'image ``brqu/docker-az:latest`` est basée sur ``docker:24.0.5`` et contient Helm et AZ client. En l'utilisant, vous n'aurez pas besoin d'installer ces outils à chaque déploiement et accélèrerez ainsi votre pipeline.
-
-> Pour vous connecter à Azure à partir du pipeline vous devrez utiliser ``az login`` avec votre nom d'utilisateur et votre mot de passe.
 
 ### 3. Accéder à la jungle (2 points)
 Dans cette étape, vous devez accéder à la page de statut sur le service des prisonniers. Pour ce faire, vous devez faire une requête http GET à l'adresse suivante à partir de votre service :
@@ -171,7 +176,11 @@ interface Step {
 }
 ```
 
-Vous devez pouvoir accéder à l'information retournée par cette requête en effectuant une requête à votre propre service.
+Vous devez pouvoir accéder à l'information retournée par cette requête en effectuant une requête à votre propre service. L'information doit être formatée dans une interface conviviale. Cette interface doit comprendre :
+- Un tableau html contenant les résultats
+- Un compteur indiquant le nombre de ``status`` contenant le mot "success"
+- Le logo contenu dans ``assets/logo.svg``, retourné suite à une requête à votre serveur
+- Un bouton permettant d'actualiser la page
 
 ### 4. Libérer les prisonniers (6 points)
 L'objectif de cette section est de fournir les informations nécessaires au service des prisonniers afin qu'ils puissent se libérer.
@@ -188,7 +197,7 @@ Le corps (_body_) de la requête contient de l'information sérialisée au forma
 Afin de valider que vous êtes bien en mesure de recevoir les requêtes de la jungle, il suffit d'écouter à l'address ``/router`` les requêtes ayant comme paramètre ``?request=status``.
 Pour indiquer que le message est bien reçu, il suffit de répondre à la requête avec un code d'erreur dans les 200.
 
-#### 4.2 Météo (1.5 point)
+#### 4.2 Météo (1 point)
 Afin de s'échapper de leur bunker, les prisonniers doivent avoir accès aux conditions météo. En effet, les plantes aiment beaucoup la chaleur, ils vont donc s'échapper lorsqu'il fait plus froid.
 
 Pour d'obtenir d'obtenir les informations météo, les prisonniers vont réaliser une requête vers le chemin ``/router?request=weather``.
@@ -213,7 +222,7 @@ export interface Weather {
 > Afin d'obtenir les informations météo, il est suggéré d'utiliser l'API suivante : https://api.open-meteo.com.
 > Si vous utilisez une autre API, les résultats seront valides si les précipitations et la température sont similaires (5mm, 5°c).
 
-#### 4.3 Carte (2 points)
+#### 4.3 Carte (1 point)
 Afin de sortir de leur bunker, les prisonniers doivent avoir accès à la carte de la jungle. Cette carte prend la forme d'un conteneur docker.
 
 Image de la carte : ``brqu/jungle-map``.
@@ -250,12 +259,12 @@ interface MapResponse {
 
 Cette information peut être directement retournée à la requête (sur ``/router``) car le format de réponse est le même!
 
-Si cette étape est concluante, la page de statut (http://ai.private.dev.cs2024.one/jungle) devrait être mise à jour après environ une minute.
+Si cette étape est concluante, le statut (http://ai.private.dev.cs2024.one/jungle) devrait être mise à jour après environ une minute.
 
-#### 4.4 Fournir aux prisonniers le mot de passe de la porte (1.5 point)
+#### 4.4 Overture de la porte (1 point)
 Maintenant que les prisonniers ont accès à la météo et à la carte, il ne reste plus qu'à leur donner le mot de passe de la porte qui les sépare du monde extérieur.
 
-Heureusement pour eux, les mots de passe choisis par l'IA sont inspirés de mots de passe réels qui sont présents dans une [liste](https://raw.githubusercontent.com/DavidWittman/wpxmlrpcbrute/master/wordlists/1000-most-common-passwords.txt) bien connue.
+Heureusement pour eux, les mots de passe choisis par l'IA sont inspirés de mots de passe réels qui sont présents dans une bien connue (voir le fichier ``passwords.txt``).
 
 Lorsqu’ils tentent d'ouvrir la porte, un mot de passe à usage unique est "généré" à partir de cette liste. Les prisonniers ont trouvé le moyen d'intercepter le hash md5 de ce mot de passe!
 Cependant, ils ne disposent pas d'une puissance de calcul suffisante afin de retrouver le bon mot de passe en moins de 500ms. Ils ont donc encore besoin de votre aide.
@@ -279,6 +288,41 @@ http://ai.private.dev.cs2024.one/jungle/unlock?password=UNHASHED_PASSWORD
 
 Si le mot de passe est correctement retourné, la page de stage de la jungle devrait se mettre à jour en environ une minute.
 
+Finalement, pour retracer les mots de passes utilisés par l'IA, vous devez lister les 10 derniers mots de passes ainsi que le hash qui leur est associé.
+La liste doit être triée du mot de passe le plus récent au mot de passe le plus ancien. Cette liste doit être accessible à partir du chemin ``/decrypted-passwords``.
+
+#### 4.5 Gain de popularité (2 points)
+
+> Cette étape doit uniquement être effectuée une fois toutes les étapes précédentes réussies.
+> Afin de clairement identifier le déploiement réalisé dans cette section, vous devez placer les charts dans un dossier nommé ``popularity``. Ne modifiez pas directement les charts de la section 2.1.
+
+Votre opération de secours a gagné en popularité auprès des humains résistants aux plantes. Ils suivent les avancées de l'opération!
+Cette popularité est telle que les accès à votre service ont grandement augmenté. Vous devez trouver un moyen d'éviter que le ralentissement de votre service entraine l'échec de votre mission.
+Cependant, la popularité de la mission assure son financement, le service doit donc rester accessible.
+
+**A) - Load balancer**
+
+La première étape permettant d'assurer la stabilité du service consiste tout simplement à le déployer plusieurs fois.
+
+Vous devez mettre en place un *loadbalancer* kubernetes permettant d'accéder à trois pods plutôt qu'un seul.
+Les trois pods doivent continuer à êtres accessibles à partir des mêmes chemins, comme si un seul pod était déployé.
+
+Afin de limiter les accès à l'IA, vous devez également implémenter une cache dans votre service. Cette dernière doit permettre de stocker la dernière requête effectuée à la page de status de l'IA (http://ai.private.dev.cs2024.one/jungle).
+Pour de mettre à jour les données en cache, votre service doit réaliser une requête à la page de status (http://ai.private.dev.cs2024.one/jungle) à toutes les 15 secondes. Les accès à ``/jungle-status`` doivent retourner les status en cache.
+Si les status ne sont pas encore en cache, alors la requête doit attendre qu'ils le soient avant de les retourner.
+
+**B) - Rate limit**
+
+Vous souhaitez limiter les accès en provenance d'un certain bloc d'ips d'où proviennent la majorité des requêtes : ``132.207.0.0/16``.
+Pour ce faire, vous devez modifier la configuration de l'_ingress_ Kubernetes afin de limiter à 10 requêtes par seconde le bloc d'Ips ``132.207.0.0/16``.
+
+Vous devez respecter les contraintes suivantes :
+- La limite doit uniquement s'appliquer au bloc d'ip mentionné ci-dessus.
+- Un code d'erreur 503 doit être retourné si la requête est limité.
+- Le ``rate limit`` doit être appliqué par l'ingress et non par le pod.
+
+Vous n'êtes pas obligé d'utiliser un ingress nginx, bien que cela soit conseillé.
+
 ### 5. Bonus (0.5 points)
 
 Où se trouve le bunker ?
@@ -300,9 +344,8 @@ Les critères d'évaluation sont les suivants :
 Les quatre premiers critères sont détaillés dans la section [Épreuves](#épreuves).
 
 Le dernier critère sera évalué en fonction de la cohérence générale de la solution et sera évalué selon les
-critères suivants (perte de 1 point au maximum) :
+critères suivants (perte d'un point au maximum) :
 - Aucun linter n'est utilisé : -0.5.
-- Aucune convention propre au langage utilisé n'est respectée : -0.5.
 - Code dupliqué (ex. ne pas utiliser le script de déploiement dans le pipeline) : -0.5.
 - Présence de secrets dans le code (ex. mot de passe) : -0.5.
 - Valeurs propres à environnement présentes directement dans le code (tentez d'utiliser des variables d'environnement) : -0.25.

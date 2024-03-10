@@ -11,15 +11,7 @@ async fn main() {
         .with_max_level(Level::DEBUG)
         .init();
 
-    let app = Router::new()
-        .route("/", get(controllers::root))
-        .layer(
-            TraceLayer::new_for_http()
-                .make_span_with(trace::DefaultMakeSpan::new()
-                    .level(Level::INFO))
-                .on_response(trace::DefaultOnResponse::new()
-                    .level(Level::INFO)),
-        );
+    let app = Router::new();
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:5000").await.unwrap();
     tracing::debug!("listening on {}", listener.local_addr().unwrap());

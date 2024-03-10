@@ -1,6 +1,5 @@
-FROM rust:1.75 as build
+FROM rust:1.75-alpine3.19 AS build
 # ...
 
-FROM rust:1.75-slim-bookworm as final
+FROM alpine:3.19.1 AS final
 #...
-

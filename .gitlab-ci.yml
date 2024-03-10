@@ -1,14 +1,4 @@
-image: rust:1.75
-
-default:
-  tags:
-    - docker
-
-.cache: &cache
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}
-    paths:
-      - target/
+image: rust:1.76
 
 stages:
   - build

@@ -42,7 +42,7 @@ Your cluster can communicate with the AI through a virtual network (VNET) set up
 
 Of course, the Azure account provided only gives access to your cluster (Team cluster). By deploying your code to your team's cluster, you will be able to interact with the jungle.
 
-The steps to accomplish your mission are listed in [Challenges](#challenges). The [getting started guide](#getting-started-guide) describes the configuration required to complete the challenges.
+The steps to accomplish your mission are listed in [Challenges](#challenges). The [getting started guide](#starting-guide) describes the configuration required to complete the challenges.
 
 Good luck!
 
@@ -61,7 +61,7 @@ First, try to connect to Azure with your team account at the following address: 
 - AZ cli, facilitates access to the cluster: [https://learn.microsoft.com/en-us/cli/azure/install-azure-cli](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
 - Helm, allows testing charts locally before deploying them: [https://helm.sh/docs/intro/install/](https://helm.sh/docs/intro/install/)
 - Rust: [https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install)
-- Clippy, enables source code formatting: `rustup component add clippy`
+- Clippy, enables source code formatting: ``rustup component add clippy``
 
 ### First connection to Azure
 First, try to connect to Azure with your team account at the following address: [https://portal.azure.com](https://portal.azure.com).
@@ -74,18 +74,22 @@ Three resources will be useful to you:
 ## Challenges
 This section details the different challenges of the competition.
 
+Everything must be written in **Rust** except deployment scripts. Calls to ``c`` / ``c++`` is prohibited.
+
 ### 1. Starting Code (5 points)
 #### 1.1 HTTP Server (1.5 points)
 This first step is the simplest. You must set up a permanent HTTP server to obtain the status of your service (health check).
 The address is not very important (e.g., /health).
 
 #### 1.2 Docker Container (3.5 points)
-You want to containerize your implementation for easier deployment. An exemple Dockerfile is provided.
+You want to containerize your implementation for easier deployment.
 
 Don't forget to:
 - Allow opening the necessary ports for your server to work
 - Separate your Dockerfile into several sections (compilation, execution, ...)
-- Use secure and small base images
+- Use caching to speed up build
+- Use secure and small base images (alpine, distroless)
+- Launch your program from an un-privileged user
 
 ### 2. Deployment (6 points)
 This section describes the steps necessary to deploy your container from the previous section to your cluster.
@@ -94,10 +98,10 @@ This section describes the steps necessary to deploy your container from the pre
 You must create Helm charts to deploy your container to a Kubernetes cluster.
 
 The charts should allow you to:
-- Deploy your service from the ACR (Azure Container Registry) provided to you (the image will be push during the next step).
-- Add a Kubernetes service to access your pod.
-- Add an Ingress to access your service from outside and thus interact with it.
-- Add a Service to allow the other cluster (the one with the AI) to access yours.
+- Deploy your service from the provided ACR (Azure Container Registry), the image will be push during the next step
+- Add a Kubernetes service to access your pod
+- Add an Ingress to access your service from outside and thus interact with it
+- Add a Service to allow the other cluster (AI cluster) to access yours
 
 The other cluster will try to access yours at address: 10.30.10.10.
 The service allowing access to your pod from the other cluster is similar to the one provided. However, it is advisable to take a look at the following annotations:
@@ -119,7 +123,7 @@ The variables required for deployment are as follows:
 - The name of the ACR
 - The name of the Resource Group
 - The name of the cluster
-- The domain name: team{team number}.dev.cs2024.one
+- The domain name, according to your Helm charts: team{team number}.dev.cs2024.one
 
 All these steps must be scripted so than can be easily reproducible. You need to refer to the Helm and Azure cli documentation to complete this step.
 
@@ -128,16 +132,21 @@ All these steps must be scripted so than can be easily reproducible. You need to
 #### 2.3 Gitlab Pipeline (2 points)
 Based on the steps from section 2.2, you must automate deployment through a Gitlab pipeline.
 
-The pipeline should allow you to:
-- Compile the code.
-- Check the code structure (lint). This can be done with Clippy.
-- Deploy to the AKS (Azure Kubernetes Service) cluster.
+Your pipeline must:
+- Compile the code
+- Check the code structure (lint), can be done with Clippy
+- Deploy to the AKS cluster (Azure Kubernetes Cluster)
 
-The first two steps are left to you. For the last one, here are some suggestions:
-- Generate the Docker image from the pipeline.
-- Reuse the script from the previous step to push the image to the ACR and deploy the Helm charts.
-- Place the necessary deployment information as environment variables in the Gitlab repository configurations.
-- Use Docker-in-Docker (dind). Since Gitlab pipelines are containerized by default, dind is very useful for enabling the use of Docker from the pipeline.
+The first two steps (build, lint) must adhere to the following requirements:
+- Must be executed during a merge request or when a commit is pushed to the `main` branch
+- Use a cache to avoid a complete recompilation on each execution
+
+The following requirements must be met for the last step:
+- Should only be triggered when a commit is pushed to the `main` branch or a `DEPLOY` tag is pushed
+- Generate the Docker image from the pipeline
+- Reuse the script from the previous step to push the image to the ACR and deploy the Helm charts
+- Place the necessary deployment information in environment variables in your Gitlab repository configurations
+- Use docker-in-docker (dind). Since Gitlab pipelines are containerized by default, dind is very useful to allow the use of Docker from the pipeline
 
 docker-in-docker job exemple :
 ```yml
@@ -146,14 +155,10 @@ JOB_NAME:
   image: brqu/docker-az:latest # Or docker:24.0.5
   services:
     - docker:24.0.5-dind
-  before_script:
-    - docker info
-...
+#  ...
 ```
 
 > The image ``brqu/docker-az:latest`` is based on ``docker:24.0.5`` and also contains helm et AZ cli. By using Gitlab pipelines, you won't need to install these tools for each deployment, which will speed up your pipeline.
-
-> To login into the azure client from the pipeline, you will need to use the ``az login`` command with your username and password.
 
 ### 3. Access the Jungle (2 points)
 In this step, you must access the status page on the jungle prisoners' service. To do this, you must make an HTTP GET request to the following address from your service:
@@ -167,7 +172,11 @@ interface Step {
 }
 ```
 
-You must be able to access the information returned by this request by making a request to your own service.
+You must be able to access the information returned by this request by making a request to your own service at the path ``/jungle-status``. The request must show a convivial interface including:
+- A html table
+- A counter indicating the number of ``status`` containing the word "success"
+- The CS logo located at ``assets/logo.svg``, return by a request to your server
+- A button to allow a page reload
 
 ### 4. Free the Prisoners (6 points)
 The objective of this section is to provide the information necessary for the prisoners to free themselves.
@@ -183,7 +192,7 @@ The body of the request contains information serialized in a specific _JSON_ for
 To validate that you are able to receive requests from the jungle, simply listen to the address ``/router`` for requests with the parameter ``?request=status``.
 To indicate that the message is well received, simply respond to the request with an error code within the 200 range.
 
-#### 4.2 Weather (1.5 points)
+#### 4.2 Weather (1 point)
 In order to escape from their bunker, the prisoners must have access to weather conditions. Indeed, plants love warn weather, so they will escape when it is colder.
 
 To obtain weather information, the prisoners will make a request to the path ``/router?request=weather``.
@@ -208,7 +217,7 @@ export interface Weather {
 > To obtain weather information, it is suggested to use the following API: [https://api.open-meteo.com](https://api.open-meteo.com).
 > If you use another API, the results will be considered valid if the precipitation and temperature are similar (5mm/cm, 5°C).
 
-#### 4.3 Map (2 points)
+#### 4.3 Map (1.5 point)
 In order to escape from their bunker, the prisoners must have access to the map of the jungle. This map takes the form of a Docker container.
 
 Map image: ``brqu/jungle-map``.
@@ -245,12 +254,12 @@ interface MapResponse {
 
 This information can be directly returned to the request (on `/router`) since the response format is the same!
 
-If this step is successful, the status page (http://ai.private.dev.cs2024.one/jungle) should be updated after about a minute.
+If this step is successful, the status (http://ai.private.dev.cs2024.one/jungle) should be updated after about a minute.
 
-#### 4.4 Provide the prisoners with the door password (1.5 points)
+#### 4.4 Opening the door (1 point)
 Now that the prisoners have access to the weather and the map, all that remains is to give them the password for the door separating them from the outside world.
 
-Fortunately for them, the passwords chosen by the AI are inspired by real passwords that are present in a well-known [list](https://raw.githubusercontent.com/DavidWittman/wpxmlrpcbrute/master/wordlists/1000-most-common-passwords.txt).
+Fortunately for them, the passwords chosen by the AI are inspired by real passwords that are present in a well-known list (see the file ``passwords.txt``).
 
 When they try to open the door, a one-time use password is "generated" from this list. The prisoners have found a way to intercept the md5 hash of this password!
 However, they do not have sufficient computing power to find the correct password in less than 500ms. So they still need your help.
@@ -274,6 +283,39 @@ http://ai.private.dev.cs2024.one/jungle/unlock?password=UNHASHED_PASSWORD
 
 If the password is correctly returned, the jungle's status page should update in about a minute.
 
+Finally, to keep tracked of the passwords used by the AI, you need to show a list of the last 10 decrypted passwords with their associated hash (sorted from last decryption to first) on a page accessible at the path ``/decrypted-passwords``.
+
+#### 4.5 Popularity gain (1.5 point)
+
+> This step should only be performed once all previous steps have been successful.
+> In order to clearly identify the deployment made in this section, you must place the charts in a folder named `popularity`. Do not directly modify the charts from section 2.1.
+
+Your backup operation has gained popularity among plant-resistant humans. They are following the progress of the operation!
+This popularity has led to a significant increase in access to your service. You must find a way to prevent the slowdown of your service from causing the mission to fail.
+However, the popularity of the mission ensures its funding, so the service must remain accessible.
+
+**A) - Load Balancer**
+
+The first step to ensure the stability of the service is simply to deploy it multiple times.
+
+You must set up a Kubernetes load balancer allowing access to three pods instead of one.
+The three pods must continue to be accessible from the same paths, as if only one pod were deployed.
+
+To limit access to the AI, you must also implement a cache in your service. This cache should store the last request made to the AI's status page (http://ai.private.dev.cs2024.one/jungle).
+To update the data in the cache, your service must make a request to the status page (http://ai.private.dev.cs2024.one/jungle) every 15 seconds. Accesses to `/jungle-status` should return the cached statuses. If the statuses are not yet cached, then the request should wait until they are before returning them.
+
+**B) - Rate Limit**
+
+You want to limit access from a certain block of IPs where the majority of requests come from: `132.207.0.0/16`.
+To do this, you must modify the Kubernetes Ingress configuration to limit the `132.207.0.0/16` IP block to 10 requests per second.
+
+You must adhere to the following constraints:
+- The limit should only apply to the IP block mentioned above.
+- A 503 error code should be returned if the request is limited.
+- The rate limit should be applied by the Ingress and not by the pod.
+
+You are not required to use an Nginx Ingress, although it is recommended.
+
 ### 5. Bonus (0.5 points)
 
 Where is the bunker?
@@ -296,7 +338,6 @@ The first four criteria are detailed in the [Challenges](#challenges) section.
 
 The final criterion will be evaluated based on the overall coherence of the solution and will be assessed according to the following criteria (loss of up to 1 point):
 - No linter is used: -0.5.
-- No language-specific conventions are respected: -0.5.
 - Duplicated code (e.g., not using the deployment script in the pipeline): -0.5.
 - Presence of secrets in the code (e.g., password): -0.5.
 - Environment-specific values present directly in the code (try to use environment variables): -0.25.
