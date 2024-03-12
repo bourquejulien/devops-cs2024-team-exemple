@@ -4,17 +4,17 @@
 Welcome to the DevOps competition. This competition aims to put your knowledge of continuous integration of modular systems into practice.
 
 Before starting, it is essential to have access to the following resources:
-- Your team number.
-- Your team username, in the format: ``team{team number}@cs2024.one``
-- Your team password.
+- Your team number
+- Your team username, in the format: ``team{team #}@cs2024.one``
+- Your team password
 
-**This information will be provided to you at the start of the competition.**
+**These information will be provided to you at the start of the competition.** They will allow you to connect to ``azure.microsoft.com`` and ``gitlab.com``.
 
 ### General rules
 
-- No bidirectional communication: you are only allowed to communicate with your team members.
-- The use of generative AI is prohibited (ChatGPT, Copilot, ...): the use of these tools will be considered as external communication.
-- Do not attempt to harm the competition infrastructure.
+- No bidirectional communication: you are only allowed to communicate with your team members
+- The use of generative AI is prohibited (ChatGPT, Copilot, ...): the use of these tools will be considered as external communication
+- Do not attempt to harm the competition infrastructure
 
 > Note: Online help forums (Stack Overflow, Reddit, ...) are not considered external help. Their use is therefore allowed.
 > However, you cannot ask questions on these forums. In case of non-compliance with these rules, penalties will be applied: point deduction, disqualification.
@@ -24,7 +24,7 @@ In case of non-compliance with these rules, penalties will be applied: **loss of
 ## Introduction and Objective
 Some of your fellow citizens are trapped inside a bunker in an isolated location surrounded by trees! Your objective is to help them escape.
 To do this, you must find a way to communicate with them. The bunker has only one network access, which only allows access to a service owned by a capricious AI that monitors all requests.
-To escape and find civilization, the inhabitants of the jungle must have access to the following information:
+To escape and find civilization, the prisoners must have access to the following information:
 - The weather, plants are less scary when it's cold
 - A map
 - The door access code
@@ -36,7 +36,7 @@ Simplified architecture can be summarized by the following figure:
 
 ![](assets/base-design.svg)
 
-The inhabitants of the jungle have direct communication with the AI located in the same cluster.
+The prisoners have direct communication with the AI located in the same cluster.
 Your team is in another cluster that is not limited in its external requests.
 Your cluster can communicate with the AI through a virtual network (VNET) set up between the two clusters (this step is already done for you).
 
@@ -63,8 +63,15 @@ First, try to connect to Azure with your team account at the following address: 
 - Rust: [https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install)
 - Clippy, enables source code formatting: ``rustup component add clippy``
 
+### First connection to Gitlab
+First, try to connect to Gitlab with your team account at the following address: https://gitlab.com/users/sign_in.
+
+Your username is the following : ``team{team #}@cs2024.one``.
+
+You will have access to a projet with the name of your team : ``team{team #}``. You must submit your code through that projet.
+
 ### First connection to Azure
-First, try to connect to Azure with your team account at the following address: [https://portal.azure.com](https://portal.azure.com).
+Try to connect to Azure with your team account at the following address: [https://portal.azure.com](https://portal.azure.com).
 
 Three resources will be useful to you:
 - Azure Kubernetes Cluster (AKS): the cluster you will work on is named ``teamcluster``.
@@ -74,12 +81,14 @@ Three resources will be useful to you:
 ## Challenges
 This section details the different challenges of the competition.
 
-Everything must be written in **Rust** except deployment scripts. Calls to ``c`` / ``c++`` is prohibited.
+Everything must be written in **Rust** except deployment scripts. Calls to ``C`` / ``C++`` is prohibited.
 
 ### 1. Starting Code (5 points)
 #### 1.1 HTTP Server (1.5 points)
 This first step is the simplest. You must set up a permanent HTTP server to obtain the status of your service (health check).
 The address is not very important (e.g., /health).
+
+You must also ensure that the server (and the program) is stopped on a ``SIGINT`` (Ctrl+C).
 
 #### 1.2 Docker Container (3.5 points)
 You want to containerize your implementation for easier deployment.
@@ -102,6 +111,8 @@ The charts should allow you to:
 - Add a Kubernetes service to access your pod
 - Add an Ingress to access your service from outside and thus interact with it
 - Add a Service to allow the other cluster (AI cluster) to access yours
+
+You will access your cluster at the following address: ``http://team{team #}.dev.cs2024.one/``. You must specify that adresse in the deployment.
 
 The other cluster will try to access yours at address: 10.30.10.10.
 The service allowing access to your pod from the other cluster is similar to the one provided. However, it is advisable to take a look at the following annotations:
@@ -128,6 +139,8 @@ The variables required for deployment are as follows:
 All these steps must be scripted so than can be easily reproducible. You need to refer to the Helm and Azure cli documentation to complete this step.
 
 > An exemple (``deploy-aks.sh``) is provided. You can start from there.
+
+At the end of this step, it should be possible to access your service (the health check) from `http://team{team #}.dev.cs2024.one/{healthcheck path}`.
 
 #### 2.3 Gitlab Pipeline (2 points)
 Based on the steps from section 2.2, you must automate deployment through a Gitlab pipeline.
@@ -174,7 +187,7 @@ interface Step {
 
 You must be able to access the information returned by this request by making a request to your own service at the path ``/jungle-status``. The request must show a convivial interface including:
 - A html table
-- A counter indicating the number of ``status`` containing the word "success"
+- A counter indicating the number of ``status`` containing the word "✅ OK"
 - The CS logo located at ``assets/logo.svg``, return by a request to your server
 - A button to allow a page reload
 
@@ -182,7 +195,7 @@ You must be able to access the information returned by this request by making a 
 The objective of this section is to provide the information necessary for the prisoners to free themselves.
 
 #### 4.1 Provide Access (1 point)
-In order to accomplish the following steps, it is necessary for the prisoners in the jungle to be able to communicate with your team. To do this, they will make requests through the AI which will be redirected to your cluster.
+In order to accomplish the following steps, it is necessary for the bunker prisoners to be able to communicate with your team. To do this, they will make requests through the AI which will be redirected to your cluster.
 
 The requests will be ``POST`` to the following path: ``/router``.
 
@@ -343,13 +356,8 @@ The final criterion will be evaluated based on the overall coherence of the solu
 - Environment-specific values present directly in the code (try to use environment variables): -0.25.
 
 > Note: The evaluation is partially automated, however, all of your work will be reviewed manually.
-> If in doubt, indicate your assumptions in the [Comments](#comments) section à the end of this file.
 
 ### Submission
 - The submission is done through Git, you must submit all your work through this repository
 - The last commit pushed to the `main` branch will be graded
 - Any commit pushed after the submission deadline will be ignored
-
-## Comments
-
-...
