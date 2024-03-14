@@ -17,7 +17,7 @@ Before starting, it is essential to have access to the following resources:
 - Do not attempt to harm the competition infrastructure
 
 > Note: Online help forums (Stack Overflow, Reddit, ...) are not considered external help. Their use is therefore allowed.
-> However, you cannot ask questions on these forums. In case of non-compliance with these rules, penalties will be applied: point deduction, disqualification.
+> However, you cannot ask questions on these forums.
 
 In case of non-compliance with these rules, penalties will be applied: **loss of points, disqualification**.
 
@@ -30,7 +30,7 @@ To escape and find civilization, the prisoners must have access to the following
 - The door access code
 
 You are lucky, and have full access to the internet (except ChatGPT 🤷), you also have incomplete access to the cluster controlled by the AI.
-You will be able to help your fellow citizens by providing them with the information they need!
+You will be able to help the prisoners by providing them with the information they need!
 
 Simplified architecture can be summarized by the following figure:
 
@@ -48,9 +48,9 @@ Good luck!
 
 ## Starting guide
 
-This sections details the installation of Required Dependencies
+This section details the installation of Required Dependencies
 
-Although this competition can be done on Windows and MacOS, the use of Linux is encouraged. On Windows, you can use WSL.
+Although this competition can be done on Windows and MacOS, the use of Linux is recommended. On Windows, you can use WSL.
 
 Recommended editors: VSCode, RustRover.
 
@@ -68,15 +68,15 @@ First, try to connect to Gitlab with your team account at the following address:
 
 Your username is the following : ``team{team #}@cs2024.one``.
 
-You will have access to a projet with the name of your team : ``team{team #}``. You must submit your code through that projet.
+You will have access to a project with the name of your team : ``team{team #}``. You must submit your code through that project.
 
 ### First connection to Azure
-Try to connect to Azure with your team account at the following address: [https://portal.azure.com](https://portal.azure.com).
+Try to connect to Azure with your team's account at the following address: [https://portal.azure.com](https://portal.azure.com).
 
 Three resources will be useful to you:
-- Azure Kubernetes Cluster (AKS): the cluster you will work on is named ``teamcluster``.
-- Azure Container Registry (ACR): the registry that will contain the images of your service is named ``team{TEAM_NUMBER}{RANDOM_ID}``.
-- Microsoft Azure AD (formerly Active Directory): allows you to retrieve the Tenant Id.
+- Azure Kubernetes Cluster (AKS): the cluster you will work on is named ``teamcluster``
+- Azure Container Registry (ACR): the registry that will contain the images of your service is named ``team{TEAM_NUMBER}{RANDOM_ID}``
+- Microsoft Azure AD (formerly Active Directory): allows you to retrieve the Tenant Id
 
 ## Challenges
 This section details the different challenges of the competition.
@@ -107,12 +107,12 @@ This section describes the steps necessary to deploy your container from the pre
 You must create Helm charts to deploy your container to a Kubernetes cluster.
 
 The charts should allow you to:
-- Deploy your service from the provided ACR (Azure Container Registry), the image will be push during the next step
+- Deploy your service from the provided ACR (Azure Container Registry), the image will be pushed during the next step
 - Add a Kubernetes service to access your pod
 - Add an Ingress to access your service from outside and thus interact with it
 - Add a Service to allow the other cluster (AI cluster) to access yours
 
-You will access your cluster at the following address: ``http://team{team #}.dev.cs2024.one/``. You must specify that adresse in the deployment.
+You will access your cluster at the following address: ``http://team{team #}.dev.cs2024.one/``. You must specify that address in the deployment.
 
 The other cluster will try to access yours at address: 10.30.10.10.
 The service allowing access to your pod from the other cluster is similar to the one provided. However, it is advisable to take a look at the following annotations:
@@ -136,7 +136,7 @@ The variables required for deployment are as follows:
 - The name of the cluster
 - The domain name, according to your Helm charts: team{team number}.dev.cs2024.one
 
-All these steps must be scripted so than can be easily reproducible. You need to refer to the Helm and Azure cli documentation to complete this step.
+All these steps must be scripted to be easily reproducible. You need to refer to the Helm and Azure cli documentation to complete this step.
 
 > An exemple (``deploy-aks.sh``) is provided. You can start from there.
 
@@ -171,7 +171,7 @@ JOB_NAME:
 #  ...
 ```
 
-> The image ``brqu/docker-az:latest`` is based on ``docker:24.0.5`` and also contains helm et AZ cli. By using Gitlab pipelines, you won't need to install these tools for each deployment, which will speed up your pipeline.
+> The image ``brqu/docker-az:latest`` is based on ``docker:24.0.5`` and also contains helm et AZ cli. By using it, you won't need to install these tools for each deployment. This will speed up your pipeline runs.
 
 ### 3. Access the Jungle (2 points)
 In this step, you must access the status page on the jungle prisoners' service. To do this, you must make an HTTP GET request to the following address from your service:
@@ -186,8 +186,8 @@ interface Step {
 ```
 
 You must be able to access the information returned by this request by making a request to your own service at the path ``/jungle-status``. The request must show a convivial interface including:
-- A html table
-- A counter indicating the number of ``status`` containing the word "✅ OK"
+- An HTML table
+- A counter indicating the number of ``status`` containing "✅ OK"
 - The CS logo located at ``assets/logo.svg``, return by a request to your server
 - A button to allow a page reload
 
@@ -197,7 +197,7 @@ The objective of this section is to provide the information necessary for the pr
 #### 4.1 Provide Access (1 point)
 In order to accomplish the following steps, it is necessary for the bunker prisoners to be able to communicate with your team. To do this, they will make requests through the AI which will be redirected to your cluster.
 
-The requests will be ``POST`` to the following path: ``/router``.
+The requests will be sent to the following path: ``/router`` as ``POST`` requests.
 
 Each request contains a query parameter: ``request``. This parameter indicates the type of request coming from the jungle.
 The body of the request contains information serialized in a specific _JSON_ format for each request.
@@ -206,7 +206,7 @@ To validate that you are able to receive requests from the jungle, simply listen
 To indicate that the message is well received, simply respond to the request with an error code within the 200 range.
 
 #### 4.2 Weather (1 point)
-In order to escape from their bunker, the prisoners must have access to weather conditions. Indeed, plants love warn weather, so they will escape when it is colder.
+In order to escape from their bunker, the prisoners must have access to weather conditions. Indeed, plants love warm weather, so the prisoners will escape when it is colder.
 
 To obtain weather information, the prisoners will make a request to the path ``/router?request=weather``.
 
@@ -230,7 +230,7 @@ export interface Weather {
 > To obtain weather information, it is suggested to use the following API: [https://api.open-meteo.com](https://api.open-meteo.com).
 > If you use another API, the results will be considered valid if the precipitation and temperature are similar (5mm/cm, 5°C).
 
-#### 4.3 Map (1.5 point)
+#### 4.3 Map (1.5 points)
 In order to escape from their bunker, the prisoners must have access to the map of the jungle. This map takes the form of a Docker container.
 
 Map image: ``brqu/jungle-map``.
@@ -296,14 +296,14 @@ http://ai.private.dev.cs2024.one/jungle/unlock?password=UNHASHED_PASSWORD
 
 If the password is correctly returned, the jungle's status page should update in about a minute.
 
-Finally, to keep tracked of the passwords used by the AI, you need to show a list of the last 10 decrypted passwords with their associated hash (sorted from last decryption to first) on a page accessible at the path ``/decrypted-passwords``.
+Finally, to keep track of the passwords used by the AI, you need to show a list of the last 10 decrypted passwords with their associated hash (sorted from last decryption to first) on a page accessible at the path ``/decrypted-passwords``.
 
 #### 4.5 Popularity gain (1.5 point)
 
 > This step should only be performed once all previous steps have been successful.
 > In order to clearly identify the deployment made in this section, you must place the charts in a folder named `popularity`. Do not directly modify the charts from section 2.1.
 
-Your backup operation has gained popularity among plant-resistant humans. They are following the progress of the operation!
+Your rescue operation has gained popularity among plant-resistant humans. They are following the progress of the operation!
 This popularity has led to a significant increase in access to your service. You must find a way to prevent the slowdown of your service from causing the mission to fail.
 However, the popularity of the mission ensures its funding, so the service must remain accessible.
 
@@ -322,14 +322,14 @@ To update the data in the cache, your service must make a request to the status 
 You want to limit access from a certain block of IPs where the majority of requests come from: `132.207.0.0/16`.
 To do this, you must modify the Kubernetes Ingress configuration to limit the `132.207.0.0/16` IP block to 10 requests per second.
 
-You must adhere to the following constraints:
-- The limit should only apply to the IP block mentioned above.
-- A 503 error code should be returned if the request is limited.
-- The rate limit should be applied by the Ingress and not by the pod.
+You must respect to the following constraints:
+- The limit should only apply to the IP block mentioned above
+- A 503 error code should be returned if the request is limited
+- The rate limit should be applied by the Ingress and not by the pod
 
 You are not required to use an Nginx Ingress, although it is recommended.
 
-### 5. Bonus (0.5 points)
+### 5. Bonus (0.5 point)
 
 Where is the bunker?
 
@@ -339,7 +339,7 @@ Where is the bunker?
 
 The grading criteria are as follows:
 
-| Critères           | Score /20 |
+| Criteria           | Score /20 |
 |--------------------|-----------|
 | Starting code      | /5        |
 | Deployment         | /6        |
@@ -350,10 +350,10 @@ The grading criteria are as follows:
 The first four criteria are detailed in the [Challenges](#challenges) section.
 
 The final criterion will be evaluated based on the overall coherence of the solution and will be assessed according to the following criteria (loss of up to 1 point):
-- No linter is used: -0.5.
-- Duplicated code (e.g., not using the deployment script in the pipeline): -0.5.
-- Presence of secrets in the code (e.g., password): -0.5.
-- Environment-specific values present directly in the code (try to use environment variables): -0.25.
+- No linter is used: -0.5
+- Duplicated code (e.g., not using the deployment script in the pipeline): -0.5
+- Presence of secrets in the code (e.g., password): -0.5
+- Environment-specific values present directly in the code (try to use environment variables): -0.25
 
 > Note: The evaluation is partially automated, however, all of your work will be reviewed manually.
 

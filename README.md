@@ -78,9 +78,9 @@ Vous aurez alors accès à un projet au nom de votre équipe : ``team{# d'équip
 Tentez maintenant de vous connecter à Azure avec votre compte d'équipe à l'adresse suivante : https://portal.azure.com.
 
 Trois ressources vous seront utiles :
-- Azure Kubernetes Cluster (AKS) : le cluster sur lequel vous travaillerez se nomme ``teamcluster``.
-- Azure Container Registry (ACR) : le registre qui contiendra les images de votre service se nomme ``team{TEAM_NUMBER}{RANDOM_ID}``.
-- Microsoft Entra ID, anciennement active directory : permet de récupérer le Tenant Id.
+- Azure Kubernetes Cluster (AKS) : le cluster sur lequel vous travaillerez se nomme ``teamcluster``
+- Azure Container Registry (ACR) : le registre qui contiendra les images de votre service se nomme ``team{TEAM_NUMBER}{RANDOM_ID}``
+- Microsoft Entra ID, anciennement active directory : permet de récupérer le Tenant Id
 
 ## Épreuves
 Cette section détaille les différentes épreuves de la compétition.
@@ -330,9 +330,9 @@ Vous souhaitez limiter les accès en provenance d'un certain bloc d'ips d'où pr
 Pour ce faire, vous devez modifier la configuration de l'_ingress_ Kubernetes afin de limiter à 10 requêtes par seconde le bloc d'Ips ``132.207.0.0/16``.
 
 Vous devez respecter les contraintes suivantes :
-- La limite doit uniquement s'appliquer au bloc d'ip mentionné ci-dessus.
-- Un code d'erreur 503 doit être retourné si la requête est limité.
-- Le ``rate limit`` doit être appliqué par l'ingress et non par le pod.
+- La limite doit uniquement s'appliquer au bloc d'ip mentionné ci-dessus
+- Un code d'erreur 503 doit être retourné si la requête est limité
+- Le ``rate limit`` doit être appliqué par l'ingress et non par le pod
 
 Vous n'êtes pas obligé d'utiliser un ingress nginx, bien que cela soit conseillé.
 
@@ -358,10 +358,10 @@ Les quatre premiers critères sont détaillés dans la section [Épreuves](#épr
 
 Le dernier critère sera évalué en fonction de la cohérence générale de la solution et sera évalué selon les
 critères suivants (perte d'un point au maximum) :
-- Aucun linter n'est utilisé : -0.5.
-- Code dupliqué (ex. ne pas utiliser le script de déploiement dans le pipeline) : -0.5.
-- Présence de secrets dans le code (ex. mot de passe) : -0.5.
-- Valeurs propres à environnement présentes directement dans le code (tentez d'utiliser des variables d'environnement) : -0.25.
+- Aucun linter n'est utilisé : -0.5
+- Code dupliqué (ex. ne pas utiliser le script de déploiement dans le pipeline) : -0.5
+- Présence de secrets dans le code (ex. mot de passe) : -0.5
+- Valeurs propres à environnement présentes directement dans le code (tentez d'utiliser des variables d'environnement) : -0.25
 
 > À noter : L'évaluation est partiellement automatisée, néanmoins l'ensemble de votre travail sera révisé manuellement.
 
